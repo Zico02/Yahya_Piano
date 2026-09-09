@@ -116,6 +116,7 @@
   [data-theme="dark"] .btn-primary{background:var(--gold);color:#16130f;}
   .btn-outline{background:transparent;border:1.5px solid var(--ink);color:var(--fg);}
   [data-theme="dark"] .btn-outline{border-color:var(--line);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
   .btn-whatsapp{background:#25D366;color:#fff;}
 
   /* ---------- HERO ---------- */
@@ -562,6 +563,7 @@
           <div id="adminSlotsWrap" style="margin-top:18px;display:none;">
             <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:8px;color:var(--muted);" data-t="admin_slots_title">Créneaux horaires</label>
             <div id="adminSlotsGrid" class="slots-grid"></div>
+            <button class="btn btn-outline btn-sm" id="hourOffBtn" data-t="admin_hour_off" style="margin-top:10px;" disabled>Heure indisponible</button>
           </div>
         </div>
       </div>
@@ -620,6 +622,7 @@
       admin_pick_day:"Sélectionnez un jour dans le calendrier.",
       admin_confirm_delete:"Supprimer cette réservation ?",
       admin_slots_title:"Créneaux horaires", admin_slot_booked:"réservé",
+      admin_hour_off:"Heure indisponible",
       footer_tag:"Professeur d'État, double diplômé en solfège et en piano", footer_admin:"Accès administrateur",
       admin_title:"Accès administrateur", admin_sub:"Réservé à Yahya. Connectez-vous pour voir les réservations.",
       admin_enter:"Entrer", admin_panel_title:"Réservations reçues",
@@ -659,6 +662,7 @@
       admin_pick_day:"Select a day on the calendar.",
       admin_confirm_delete:"Delete this booking?",
       admin_slots_title:"Time slots", admin_slot_booked:"booked",
+      admin_hour_off:"Block selected hours",
       footer_tag:"State-certified teacher, dual-degree holder in music theory and piano", footer_admin:"Admin access",
       admin_title:"Admin access", admin_sub:"For Yahya only. Sign in to view bookings.",
       admin_enter:"Enter", admin_panel_title:"Bookings received",
@@ -698,6 +702,7 @@
       admin_pick_day:"Selecciona un día en el calendario.",
       admin_confirm_delete:"¿Eliminar esta reserva?",
       admin_slots_title:"Horarios", admin_slot_booked:"reservado",
+      admin_hour_off:"Bloquear horas seleccionadas",
       footer_tag:"Profesor certificado por el Estado, doble titulado en solfeo y piano", footer_admin:"Acceso de administrador",
       admin_title:"Acceso de administrador", admin_sub:"Solo para Yahya. Inicia sesión para ver las reservas.",
       admin_enter:"Entrar", admin_panel_title:"Reservas recibidas",
@@ -737,6 +742,7 @@
       admin_pick_day:"اختر يوماً من التقويم.",
       admin_confirm_delete:"هل تريد حذف هذا الحجز؟",
       admin_slots_title:"مواعيد الحصص", admin_slot_booked:"محجوز",
+      admin_hour_off:"حظر الساعات المحددة",
       footer_tag:"أستاذ معتمد من الدولة، حاصل على شهادتين في السولفيج والبيانو", footer_admin:"دخول المسؤول",
       admin_title:"دخول المسؤول", admin_sub:"خاص بيحيى فقط. سجّل الدخول لعرض الحجوزات.",
       admin_enter:"دخول", admin_panel_title:"الحجوزات المستلمة",
@@ -916,9 +922,15 @@
   function updatePriceBadge(){
     const d = dict[currentLang];
     const lvl = LEVELS.find(l=>l.id === document.getElementById("bLevel").value) || LEVELS[0];
-    document.getElementById("priceBadge").textContent = `${d.price_prefix} ${lvl.price} DH ${d.price_suffix}`;
+    const n = bookState.selectedTimes.length;
+    if(n > 1){
+      document.getElementById("priceBadge").textContent = `${d.price_prefix} ${lvl.price} DH ${d.price_suffix} × ${n} = ${lvl.price * n} DH`;
+    }else{
+      document.getElementById("priceBadge").textContent = `${d.price_prefix} ${lvl.price} DH ${d.price_suffix}`;
+    }
   }
   document.getElementById("bLevel").addEventListener("change", updatePriceBadge);
+
 
   const DAILY_SLOTS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
 
@@ -1078,7 +1090,7 @@
   }
 
   /* ================= CLIENT BOOKING WIDGET ================= */
-  const bookState = { year: new Date().getFullYear(), month: new Date().getMonth(), selectedDate: null, selectedTime: null };
+  const bookState = { year: new Date().getFullYear(), month: new Date().getMonth(), selectedDate: null, selectedTimes: [] };
 
   async function refreshBookingCalendar(){
     const [bookings, offDays] = await Promise.all([getBookings(), getOffDays()]);
@@ -1091,7 +1103,7 @@
       allowSelectOff: false,
       onSelect: async (ds)=>{
         bookState.selectedDate = ds;
-        bookState.selectedTime = null;
+        bookState.selectedTimes = [];
         await refreshBookingCalendar();
         await renderSlotsForDate(ds, bookings);
       },
@@ -1102,10 +1114,12 @@
     }
   }
 
+  function bookingTimes(b){ return Array.isArray(b.times) && b.times.length ? b.times : (b.time ? [b.time] : []); }
+
   async function renderSlotsForDate(ds, bookingsMaybe){
     const d = dict[currentLang];
     const bookings = bookingsMaybe || await getBookings();
-    const takenTimes = new Set(bookings.filter(b=>b.date===ds).map(b=>b.time));
+    const takenTimes = new Set(bookings.filter(b=>b.date===ds).flatMap(bookingTimes));
     const allBlocked = await getAllBlockedSlots();
     const blockedTimes = new Set(allBlocked[ds] || []);
     const field = document.getElementById("slotsField");
@@ -1120,12 +1134,15 @@
       const unavailable = takenTimes.has(t) || blockedTimes.has(t);
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "slot-btn" + (unavailable ? " taken" : "") + (bookState.selectedTime===t ? " selected" : "");
+      btn.className = "slot-btn" + (unavailable ? " taken" : "") + (bookState.selectedTimes.includes(t) ? " selected" : "");
       btn.textContent = t;
       if(!unavailable){
         btn.addEventListener("click", ()=>{
-          bookState.selectedTime = t;
+          const i = bookState.selectedTimes.indexOf(t);
+          if(i > -1) bookState.selectedTimes.splice(i, 1);
+          else bookState.selectedTimes.push(t);
           renderSlotsForDate(ds, bookings);
+          updatePriceBadge();
         });
       }else{
         btn.disabled = true;
@@ -1133,6 +1150,7 @@
       grid.appendChild(btn);
     });
   }
+
 
   document.getElementById("bookSubmit").addEventListener("click", async ()=>{
     const d = dict[currentLang];
@@ -1142,22 +1160,23 @@
     const levelId = document.getElementById("bLevel").value;
     const level = LEVELS.find(l=>l.id===levelId) || LEVELS[0];
     const date = bookState.selectedDate;
-    const time = bookState.selectedTime;
+    const times = [...bookState.selectedTimes].sort();
 
     if(!date){
       msgEl.className = "form-msg err";
       msgEl.textContent = d.pick_date_first;
       return;
     }
-    if(!name || !phone || !time){
+    if(!name || !phone || times.length === 0){
       msgEl.className = "form-msg err";
       msgEl.textContent = d.book_err;
       return;
     }
 
+    const totalPrice = level.price * times.length;
     const booking = {
-      name, phone, date, time,
-      levelId: level.id, levelLabel: levelLabel(level), price: level.price,
+      name, phone, date, time: times[0], times,
+      levelId: level.id, levelLabel: levelLabel(level), price: totalPrice,
       createdAt: new Date().toISOString()
     };
 
@@ -1167,12 +1186,12 @@
     if(ok){
       msgEl.className = "form-msg ok";
       msgEl.textContent = d.book_ok;
-      const waText = `${d.wmsg_book} : ${name}, ${levelLabel(level)} (${level.price} DH), ${date} ${time}. Tél: ${phone}`;
+      const waText = `${d.wmsg_book} : ${name}, ${levelLabel(level)} (${totalPrice} DH), ${date} ${times.join(", ")}. Tél: ${phone}`;
       window.open(waLink(waText), "_blank");
       document.getElementById("bName").value = "";
       document.getElementById("bPhone").value = "";
       bookState.selectedDate = null;
-      bookState.selectedTime = null;
+      bookState.selectedTimes = [];
       document.getElementById("slotsField").style.display = "none";
       await refreshBookingCalendar();
     }else{
@@ -1184,6 +1203,7 @@
   /* ================= ADMIN PANEL (calendar + full CRUD) ================= */
   const adminOverlay = document.getElementById("adminOverlay");
   const adminState = { year: new Date().getFullYear(), month: new Date().getMonth(), selectedDate: null };
+  let adminHourSelection = new Set();
 
   document.getElementById("adminClose").addEventListener("click", ()=>{
     adminOverlay.classList.remove("open");
@@ -1258,6 +1278,10 @@
     const d = dict[currentLang];
     document.getElementById("adminDayLabel").textContent = formatDayLabel(ds);
     document.getElementById("adminFormZone").innerHTML = "";
+    if(adminHourSelection.__day !== ds){
+      adminHourSelection = new Set();
+      adminHourSelection.__day = ds;
+    }
 
     const [bookings, offDays] = await Promise.all([getBookings(), getOffDays()]);
     const isOff = offDays.includes(ds);
@@ -1282,7 +1306,7 @@
       agenda.innerHTML = dayBookings.map(b=>`
         <div class="agenda-item" data-id="${b.id}">
           <div>
-            <div class="who">${b.time} — ${b.name}</div>
+            <div class="who">${bookingTimes(b).join(", ")} — ${b.name}</div>
             <div class="meta">${b.levelLabel || ""} · ${b.price ? b.price+" DH" : ""} · ${b.phone}</div>
           </div>
           <div class="agenda-actions">
@@ -1323,18 +1347,19 @@
 
     const allBlocked = await getAllBlockedSlots();
     const blockedTimes = new Set(allBlocked[ds] || []);
-    const bookedTimes = new Set(dayBookings.map(b=>b.time));
+    const bookedTimes = new Set(dayBookings.flatMap(bookingTimes));
 
     grid.innerHTML = "";
     DAILY_SLOTS.forEach(t=>{
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.textContent = bookedTimes.has(t) ? `${t} · ${d.admin_slot_booked}` : t;
 
       if(bookedTimes.has(t)){
+        btn.textContent = `${t} · ${d.admin_slot_booked}`;
         btn.className = "slot-btn booked-state";
         btn.disabled = true;
       }else if(blockedTimes.has(t)){
+        btn.textContent = t;
         btn.className = "slot-btn blocked-state";
         btn.addEventListener("click", async ()=>{
           const current = await getAllBlockedSlots();
@@ -1344,24 +1369,35 @@
           await refreshBookingCalendar();
         });
       }else{
-        btn.className = "slot-btn";
-        btn.addEventListener("click", async ()=>{
-          const current = await getAllBlockedSlots();
-          const forDay = [...(current[ds] || []), t];
-          await setBlockedSlotsForDate(ds, forDay);
-          await renderAdminSlots(ds, dayBookings);
-          await refreshBookingCalendar();
+        btn.textContent = t;
+        btn.className = "slot-btn" + (adminHourSelection.has(t) ? " selected" : "");
+        btn.addEventListener("click", ()=>{
+          if(adminHourSelection.has(t)) adminHourSelection.delete(t);
+          else adminHourSelection.add(t);
+          renderAdminSlots(ds, dayBookings);
         });
       }
       grid.appendChild(btn);
     });
+
+    const applyBtn = document.getElementById("hourOffBtn");
+    applyBtn.disabled = adminHourSelection.size === 0;
+    applyBtn.onclick = async ()=>{
+      const current = await getAllBlockedSlots();
+      const merged = new Set([...(current[ds] || []), ...adminHourSelection]);
+      await setBlockedSlotsForDate(ds, [...merged]);
+      const day = adminHourSelection.__day;
+      adminHourSelection = new Set();
+      adminHourSelection.__day = day;
+      await renderAdminSlots(ds, dayBookings);
+      await refreshBookingCalendar();
+    };
   }
 
   function renderAdminForm(ds, existing){
     const d = dict[currentLang];
     const zone = document.getElementById("adminFormZone");
     const levelOptions = LEVELS.map(l=>`<option value="${l.id}" ${existing && existing.levelId===l.id ? "selected" : ""}>${levelLabel(l)} — ${l.price} DH</option>`).join("");
-    const timeOptions = DAILY_SLOTS.map(t=>`<option value="${t}" ${existing && existing.time===t ? "selected" : ""}>${t}</option>`).join("");
     zone.innerHTML = `
       <div class="edit-form">
         <div class="field">
@@ -1378,7 +1414,7 @@
         </div>
         <div class="field">
           <label>${d.f_time}</label>
-          <select id="afTime">${timeOptions}</select>
+          <div id="afTimesGrid" class="slots-grid"></div>
         </div>
         <div class="edit-form-actions">
           <button class="btn btn-primary btn-sm" id="afSave">${d.admin_save}</button>
@@ -1386,24 +1422,57 @@
         </div>
       </div>
     `;
+
+    const afSelectedTimes = new Set(existing ? bookingTimes(existing) : []);
+
+    async function renderAfTimesGrid(){
+      const grid = document.getElementById("afTimesGrid");
+      const allBookings = await getBookings();
+      const takenByOthers = new Set(
+        allBookings
+          .filter(b => b.date === ds && (!existing || b.id !== existing.id))
+          .flatMap(bookingTimes)
+      );
+      grid.innerHTML = "";
+      DAILY_SLOTS.forEach(t=>{
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = t;
+        if(takenByOthers.has(t)){
+          btn.className = "slot-btn taken";
+          btn.disabled = true;
+        }else{
+          btn.className = "slot-btn" + (afSelectedTimes.has(t) ? " selected" : "");
+          btn.addEventListener("click", ()=>{
+            if(afSelectedTimes.has(t)) afSelectedTimes.delete(t);
+            else afSelectedTimes.add(t);
+            renderAfTimesGrid();
+          });
+        }
+        grid.appendChild(btn);
+      });
+    }
+    renderAfTimesGrid();
+
     document.getElementById("afCancel").addEventListener("click", ()=>{ zone.innerHTML = ""; });
     document.getElementById("afSave").addEventListener("click", async ()=>{
       const name = document.getElementById("afName").value.trim();
       const phone = document.getElementById("afPhone").value.trim();
       const levelId = document.getElementById("afLevel").value;
-      const time = document.getElementById("afTime").value;
+      const times = [...afSelectedTimes].sort();
       const level = LEVELS.find(l=>l.id===levelId) || LEVELS[0];
-      if(!name || !phone) return;
+      if(!name || !phone || times.length === 0) return;
+      const totalPrice = level.price * times.length;
 
       if(existing){
         await updateBookingDoc(existing.id, {
-          name, phone, date:ds, time,
-          levelId:level.id, levelLabel:levelLabel(level), price:level.price
+          name, phone, date:ds, time:times[0], times,
+          levelId:level.id, levelLabel:levelLabel(level), price:totalPrice
         });
       }else{
         await addBookingDoc({
-          name, phone, date:ds, time,
-          levelId:level.id, levelLabel:levelLabel(level), price:level.price,
+          name, phone, date:ds, time:times[0], times,
+          levelId:level.id, levelLabel:levelLabel(level), price:totalPrice,
           createdAt: new Date().toISOString()
         });
       }
