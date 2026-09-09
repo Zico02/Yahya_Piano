@@ -298,6 +298,8 @@
   }
   .slot-btn.taken{opacity:.35;text-decoration:line-through;cursor:not-allowed;}
   .slot-btn.selected{background:var(--gold);border-color:var(--gold);color:#16130f;}
+  .slot-btn.booked-state{background:var(--panel-2);border-color:var(--line);color:var(--muted);cursor:not-allowed;}
+  .slot-btn.blocked-state{background:#c0503f;border-color:#c0503f;color:#fff;}
   .no-slots{font-size:13px;color:var(--muted);grid-column:1/-1;}
 
   /* ---------- SOCIAL / FOOTER ---------- */
@@ -424,7 +426,7 @@
     <div class="portrait-ring"></div>
   </div>
   <h1 data-t="hero_title">Yahya AHAJI</h1>
-  <div class="role" data-t="hero_role">Professeur de solfège et piano</div>
+  <div class="role" data-t="hero_role">Professeur d'État, double diplômé en solfège et en piano</div>
   <p class="lead" data-t="hero_lead">Des cours de piano individuels, pensés pour chaque âge et chaque niveau — de l'initiation à la virtuosité.</p>
   <div class="hero-ctas">
     <a href="#booking" class="btn btn-primary" data-t="hero_cta_book">Réserver une séance</a>
@@ -514,7 +516,7 @@
   <div class="footer-grid">
     <div>
       <div class="brand"><span class="dot"></span><span>Yahya AHAJI</span></div>
-      <p style="margin-top:8px;font-size:13px;" data-t="footer_tag">Professeur de solfège et piano</p>
+      <p style="margin-top:8px;font-size:13px;" data-t="footer_tag">Professeur d'État, double diplômé en solfège et en piano</p>
     </div>
     <div class="socials">
       <a class="social-btn" href="https://www.instagram.com/just____yahya?stkn=MmMyaXJvNTFqaWRh" target="_blank" rel="noopener" aria-label="Instagram">
@@ -557,6 +559,10 @@
           <div id="adminAgenda"></div>
           <button class="btn btn-outline btn-sm" id="adminAddBtn" data-t="admin_add" style="margin-top:14px;display:none;">+ Nouvelle réservation</button>
           <div id="adminFormZone"></div>
+          <div id="adminSlotsWrap" style="margin-top:18px;display:none;">
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:8px;color:var(--muted);" data-t="admin_slots_title">Créneaux horaires</label>
+            <div id="adminSlotsGrid" class="slots-grid"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -593,7 +599,7 @@
     fr: {
       nav_videos:"Vidéos", nav_pedagogy:"Pédagogie", nav_booking:"Réservation", nav_contact:"Contact",
       hero_eyebrow:"COURS DE PIANO PARTICULIERS",
-      hero_title:"Yahya AHAJI", hero_role:"Professeur de solfège et piano",
+      hero_title:"Yahya AHAJI", hero_role:"Professeur d'État, double diplômé en solfège et en piano",
       hero_lead:"Des cours de piano individuels, pensés pour chaque âge et chaque niveau — de l'initiation à la virtuosité.",
       hero_cta_book:"Réserver une séance",
       videos_eyebrow:"EN SITUATION", videos_title:"Regarder Yahya jouer",
@@ -613,7 +619,8 @@
       admin_cancel:"Annuler", admin_off_on:"Jour indisponible", admin_off_off:"Rendre disponible",
       admin_pick_day:"Sélectionnez un jour dans le calendrier.",
       admin_confirm_delete:"Supprimer cette réservation ?",
-      footer_tag:"Professeur de solfège et piano", footer_admin:"Accès administrateur",
+      admin_slots_title:"Créneaux horaires", admin_slot_booked:"réservé",
+      footer_tag:"Professeur d'État, double diplômé en solfège et en piano", footer_admin:"Accès administrateur",
       admin_title:"Accès administrateur", admin_sub:"Réservé à Yahya. Connectez-vous pour voir les réservations.",
       admin_enter:"Entrer", admin_panel_title:"Réservations reçues",
       ped_kids_t:"Enfants", ped_kids_d:"Éveil musical par le jeu, écoute et petites pièces simples pour construire des bases solides sans pression.",
@@ -631,7 +638,7 @@
     en: {
       nav_videos:"Videos", nav_pedagogy:"Teaching", nav_booking:"Booking", nav_contact:"Contact",
       hero_eyebrow:"PRIVATE PIANO LESSONS",
-      hero_title:"Yahya AHAJI", hero_role:"Music theory (solfège) and piano teacher",
+      hero_title:"Yahya AHAJI", hero_role:"State-certified teacher, dual-degree holder in music theory and piano",
       hero_lead:"One-on-one piano lessons designed for every age and level — from first notes to virtuosity.",
       hero_cta_book:"Book a session",
       videos_eyebrow:"IN ACTION", videos_title:"Watch Yahya play",
@@ -651,7 +658,8 @@
       admin_cancel:"Cancel", admin_off_on:"Day unavailable", admin_off_off:"Make available",
       admin_pick_day:"Select a day on the calendar.",
       admin_confirm_delete:"Delete this booking?",
-      footer_tag:"Music theory (solfège) and piano teacher", footer_admin:"Admin access",
+      admin_slots_title:"Time slots", admin_slot_booked:"booked",
+      footer_tag:"State-certified teacher, dual-degree holder in music theory and piano", footer_admin:"Admin access",
       admin_title:"Admin access", admin_sub:"For Yahya only. Sign in to view bookings.",
       admin_enter:"Enter", admin_panel_title:"Bookings received",
       ped_kids_t:"Kids", ped_kids_d:"Musical awakening through play, listening and simple pieces to build solid foundations without pressure.",
@@ -669,7 +677,7 @@
     es: {
       nav_videos:"Vídeos", nav_pedagogy:"Metodología", nav_booking:"Reserva", nav_contact:"Contacto",
       hero_eyebrow:"CLASES PARTICULARES DE PIANO",
-      hero_title:"Yahya AHAJI", hero_role:"Profesor de solfeo y piano",
+      hero_title:"Yahya AHAJI", hero_role:"Profesor certificado por el Estado, doble titulado en solfeo y piano",
       hero_lead:"Clases de piano individuales, pensadas para cada edad y nivel, desde la iniciación hasta el virtuosismo.",
       hero_cta_book:"Reservar una clase",
       videos_eyebrow:"EN ACCIÓN", videos_title:"Ver a Yahya tocar",
@@ -689,7 +697,8 @@
       admin_cancel:"Cancelar", admin_off_on:"Día no disponible", admin_off_off:"Hacer disponible",
       admin_pick_day:"Selecciona un día en el calendario.",
       admin_confirm_delete:"¿Eliminar esta reserva?",
-      footer_tag:"Profesor de solfeo y piano", footer_admin:"Acceso de administrador",
+      admin_slots_title:"Horarios", admin_slot_booked:"reservado",
+      footer_tag:"Profesor certificado por el Estado, doble titulado en solfeo y piano", footer_admin:"Acceso de administrador",
       admin_title:"Acceso de administrador", admin_sub:"Solo para Yahya. Inicia sesión para ver las reservas.",
       admin_enter:"Entrar", admin_panel_title:"Reservas recibidas",
       ped_kids_t:"Niños", ped_kids_d:"Despertar musical a través del juego, la escucha y piezas sencillas para bases sólidas sin presión.",
@@ -707,7 +716,7 @@
     ar: {
       nav_videos:"فيديوهات", nav_pedagogy:"المنهجية", nav_booking:"الحجز", nav_contact:"تواصل",
       hero_eyebrow:"دروس بيانو خصوصية",
-      hero_title:"يحيى الحاجي", hero_role:"أستاذ سولفيج وبيانو",
+      hero_title:"يحيى الحاجي", hero_role:"أستاذ معتمد من الدولة، حاصل على شهادتين في السولفيج والبيانو",
       hero_lead:"دروس بيانو فردية مصممة لكل عمر ومستوى، من الانطلاقة الأولى إلى الاحتراف.",
       hero_cta_book:"احجز حصة",
       videos_eyebrow:"في الأداء", videos_title:"شاهد يحيى وهو يعزف",
@@ -727,7 +736,8 @@
       admin_cancel:"إلغاء", admin_off_on:"يوم غير متاح", admin_off_off:"إتاحة اليوم",
       admin_pick_day:"اختر يوماً من التقويم.",
       admin_confirm_delete:"هل تريد حذف هذا الحجز؟",
-      footer_tag:"أستاذ سولفيج وبيانو", footer_admin:"دخول المسؤول",
+      admin_slots_title:"مواعيد الحصص", admin_slot_booked:"محجوز",
+      footer_tag:"أستاذ معتمد من الدولة، حاصل على شهادتين في السولفيج والبيانو", footer_admin:"دخول المسؤول",
       admin_title:"دخول المسؤول", admin_sub:"خاص بيحيى فقط. سجّل الدخول لعرض الحجوزات.",
       admin_enter:"دخول", admin_panel_title:"الحجوزات المستلمة",
       ped_kids_t:"الأطفال", ped_kids_d:"استيقاظ موسيقي عبر اللعب والاستماع وقطع بسيطة لبناء أساس متين دون ضغط.",
@@ -910,7 +920,7 @@
   }
   document.getElementById("bLevel").addEventListener("change", updatePriceBadge);
 
-  const DAILY_SLOTS = ["09:00","10:00","11:00","12:00","14:00","15:00","16:00","17:00","18:00","19:00"];
+  const DAILY_SLOTS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
 
   /* ---------------- DATE HELPERS ---------------- */
   function pad2(n){ return n < 10 ? "0"+n : ""+n; }
@@ -1048,6 +1058,24 @@
       return false;
     }
   }
+  async function getAllBlockedSlots(){
+    try{
+      const snap = await getDoc(doc(db, "meta", "blockedSlots"));
+      return snap.exists() ? snap.data() : {};
+    }catch(e){
+      console.error("Firestore read error (blockedSlots)", e);
+      return {};
+    }
+  }
+  async function setBlockedSlotsForDate(dateStr, times){
+    try{
+      await setDoc(doc(db, "meta", "blockedSlots"), { [dateStr]: times }, { merge: true });
+      return true;
+    }catch(e){
+      console.error("Firestore write error (blockedSlots)", e);
+      return false;
+    }
+  }
 
   /* ================= CLIENT BOOKING WIDGET ================= */
   const bookState = { year: new Date().getFullYear(), month: new Date().getMonth(), selectedDate: null, selectedTime: null };
@@ -1078,6 +1106,8 @@
     const d = dict[currentLang];
     const bookings = bookingsMaybe || await getBookings();
     const takenTimes = new Set(bookings.filter(b=>b.date===ds).map(b=>b.time));
+    const allBlocked = await getAllBlockedSlots();
+    const blockedTimes = new Set(allBlocked[ds] || []);
     const field = document.getElementById("slotsField");
     const grid = document.getElementById("slotsGrid");
     field.style.display = "block";
@@ -1087,11 +1117,12 @@
       return;
     }
     DAILY_SLOTS.forEach(t=>{
+      const unavailable = takenTimes.has(t) || blockedTimes.has(t);
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "slot-btn" + (takenTimes.has(t) ? " taken" : "") + (bookState.selectedTime===t ? " selected" : "");
+      btn.className = "slot-btn" + (unavailable ? " taken" : "") + (bookState.selectedTime===t ? " selected" : "");
       btn.textContent = t;
-      if(!takenTimes.has(t)){
+      if(!unavailable){
         btn.addEventListener("click", ()=>{
           bookState.selectedTime = t;
           renderSlotsForDate(ds, bookings);
@@ -1278,8 +1309,52 @@
       });
     }
 
+    await renderAdminSlots(ds, dayBookings);
+
     document.getElementById("adminAddBtn").style.display = "inline-block";
     document.getElementById("adminAddBtn").onclick = ()=> renderAdminForm(ds, null);
+  }
+
+  async function renderAdminSlots(ds, dayBookings){
+    const d = dict[currentLang];
+    const wrap = document.getElementById("adminSlotsWrap");
+    const grid = document.getElementById("adminSlotsGrid");
+    wrap.style.display = "block";
+
+    const allBlocked = await getAllBlockedSlots();
+    const blockedTimes = new Set(allBlocked[ds] || []);
+    const bookedTimes = new Set(dayBookings.map(b=>b.time));
+
+    grid.innerHTML = "";
+    DAILY_SLOTS.forEach(t=>{
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = bookedTimes.has(t) ? `${t} · ${d.admin_slot_booked}` : t;
+
+      if(bookedTimes.has(t)){
+        btn.className = "slot-btn booked-state";
+        btn.disabled = true;
+      }else if(blockedTimes.has(t)){
+        btn.className = "slot-btn blocked-state";
+        btn.addEventListener("click", async ()=>{
+          const current = await getAllBlockedSlots();
+          const forDay = (current[ds] || []).filter(x=>x!==t);
+          await setBlockedSlotsForDate(ds, forDay);
+          await renderAdminSlots(ds, dayBookings);
+          await refreshBookingCalendar();
+        });
+      }else{
+        btn.className = "slot-btn";
+        btn.addEventListener("click", async ()=>{
+          const current = await getAllBlockedSlots();
+          const forDay = [...(current[ds] || []), t];
+          await setBlockedSlotsForDate(ds, forDay);
+          await renderAdminSlots(ds, dayBookings);
+          await refreshBookingCalendar();
+        });
+      }
+      grid.appendChild(btn);
+    });
   }
 
   function renderAdminForm(ds, existing){
