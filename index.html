@@ -536,13 +536,17 @@
     <button class="close-x" id="adminClose">&times;</button>
     <div id="adminGate" class="admin-pass">
       <h3 data-t="admin_title">Accès administrateur</h3>
-      <p data-t="admin_sub" style="font-size:13px;">Réservé à Yahya. Entrez le mot de passe pour voir les réservations.</p>
-      <input type="password" id="adminPassInput" placeholder="Mot de passe">
+      <p data-t="admin_sub" style="font-size:13px;">Réservé à Yahya. Connectez-vous pour voir les réservations.</p>
+      <input type="email" id="adminEmailInput" placeholder="Email" autocomplete="username">
+      <input type="password" id="adminPassInput" placeholder="Mot de passe" autocomplete="current-password">
       <button class="btn btn-primary" id="adminPassSubmit" data-t="admin_enter">Entrer</button>
       <div class="form-msg err" id="adminErr"></div>
     </div>
     <div id="adminPanel" style="display:none;">
-      <h3 data-t="admin_panel_title">Réservations reçues</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 data-t="admin_panel_title">Réservations reçues</h3>
+        <button class="admin-link" id="adminLogout" data-t="admin_logout" style="font-size:12px;">Se déconnecter</button>
+      </div>
       <div class="admin-layout">
         <div id="adminCal" class="mini-cal"></div>
         <div class="admin-day-panel">
@@ -559,10 +563,30 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  import {
+    getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, setDoc, getDoc
+  } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+  import {
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCkYFBeelLXUKCd8b8ObOmjLI9pPLgm5oM",
+    authDomain: "yahya-piano.firebaseapp.com",
+    projectId: "yahya-piano",
+    storageBucket: "yahya-piano.firebasestorage.app",
+    messagingSenderId: "564075250047",
+    appId: "1:564075250047:web:22f369b875f22afe231a4a",
+    measurementId: "G-ZXFN61FJ0D"
+  };
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
+  const auth = getAuth(fbApp);
+
 (function(){
   const WA_NUMBER = "212614939199"; // 06 14 93 91 99 in international format
-  const ADMIN_PASSWORD = "yahya2026"; // change this to something private
 
   /* ---------------- TRANSLATIONS ---------------- */
   const dict = {
@@ -585,12 +609,12 @@
       pick_date_first:"Choisissez d'abord une date.",
       months:["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"],
       dows:["L","M","M","J","V","S","D"],
-      admin_add:"+ Nouvelle réservation", admin_edit:"Modifier", admin_save:"Enregistrer",
+      admin_add:"+ Nouvelle réservation", admin_edit:"Modifier", admin_save:"Enregistrer", admin_logout:"Se déconnecter",
       admin_cancel:"Annuler", admin_off_on:"Jour indisponible", admin_off_off:"Rendre disponible",
       admin_pick_day:"Sélectionnez un jour dans le calendrier.",
       admin_confirm_delete:"Supprimer cette réservation ?",
       footer_tag:"Professeur de solfège et piano", footer_admin:"Accès administrateur",
-      admin_title:"Accès administrateur", admin_sub:"Réservé à Yahya. Entrez le mot de passe pour voir les réservations.",
+      admin_title:"Accès administrateur", admin_sub:"Réservé à Yahya. Connectez-vous pour voir les réservations.",
       admin_enter:"Entrer", admin_panel_title:"Réservations reçues",
       ped_kids_t:"Enfants", ped_kids_d:"Éveil musical par le jeu, écoute et petites pièces simples pour construire des bases solides sans pression.",
       ped_teen_t:"Adolescents", ped_teen_d:"Répertoire motivant, technique structurée et préparation aux examens ou concours selon l'objectif.",
@@ -623,12 +647,12 @@
       pick_date_first:"Choose a date first.",
       months:["January","February","March","April","May","June","July","August","September","October","November","December"],
       dows:["M","T","W","T","F","S","S"],
-      admin_add:"+ New booking", admin_edit:"Edit", admin_save:"Save",
+      admin_add:"+ New booking", admin_edit:"Edit", admin_save:"Save", admin_logout:"Sign out",
       admin_cancel:"Cancel", admin_off_on:"Day unavailable", admin_off_off:"Make available",
       admin_pick_day:"Select a day on the calendar.",
       admin_confirm_delete:"Delete this booking?",
       footer_tag:"Music theory (solfège) and piano teacher", footer_admin:"Admin access",
-      admin_title:"Admin access", admin_sub:"For Yahya only. Enter the password to view bookings.",
+      admin_title:"Admin access", admin_sub:"For Yahya only. Sign in to view bookings.",
       admin_enter:"Enter", admin_panel_title:"Bookings received",
       ped_kids_t:"Kids", ped_kids_d:"Musical awakening through play, listening and simple pieces to build solid foundations without pressure.",
       ped_teen_t:"Teenagers", ped_teen_d:"Engaging repertoire, structured technique and exam or competition prep depending on the goal.",
@@ -661,12 +685,12 @@
       pick_date_first:"Elige primero una fecha.",
       months:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"],
       dows:["L","M","X","J","V","S","D"],
-      admin_add:"+ Nueva reserva", admin_edit:"Editar", admin_save:"Guardar",
+      admin_add:"+ Nueva reserva", admin_edit:"Editar", admin_save:"Guardar", admin_logout:"Cerrar sesión",
       admin_cancel:"Cancelar", admin_off_on:"Día no disponible", admin_off_off:"Hacer disponible",
       admin_pick_day:"Selecciona un día en el calendario.",
       admin_confirm_delete:"¿Eliminar esta reserva?",
       footer_tag:"Profesor de solfeo y piano", footer_admin:"Acceso de administrador",
-      admin_title:"Acceso de administrador", admin_sub:"Solo para Yahya. Introduce la contraseña para ver las reservas.",
+      admin_title:"Acceso de administrador", admin_sub:"Solo para Yahya. Inicia sesión para ver las reservas.",
       admin_enter:"Entrar", admin_panel_title:"Reservas recibidas",
       ped_kids_t:"Niños", ped_kids_d:"Despertar musical a través del juego, la escucha y piezas sencillas para bases sólidas sin presión.",
       ped_teen_t:"Adolescentes", ped_teen_d:"Repertorio motivador, técnica estructurada y preparación de exámenes o concursos según el objetivo.",
@@ -699,12 +723,12 @@
       pick_date_first:"اختر تاريخاً أولاً.",
       months:["يناير","فبراير","مارس","أبريل","ماي","يونيو","يوليوز","غشت","شتنبر","أكتوبر","نونبر","دجنبر"],
       dows:["إ","ث","أ","خ","ج","س","ح"],
-      admin_add:"+ حجز جديد", admin_edit:"تعديل", admin_save:"حفظ",
+      admin_add:"+ حجز جديد", admin_edit:"تعديل", admin_save:"حفظ", admin_logout:"تسجيل الخروج",
       admin_cancel:"إلغاء", admin_off_on:"يوم غير متاح", admin_off_off:"إتاحة اليوم",
       admin_pick_day:"اختر يوماً من التقويم.",
       admin_confirm_delete:"هل تريد حذف هذا الحجز؟",
       footer_tag:"أستاذ سولفيج وبيانو", footer_admin:"دخول المسؤول",
-      admin_title:"دخول المسؤول", admin_sub:"خاص بيحيى فقط. أدخل كلمة المرور لعرض الحجوزات.",
+      admin_title:"دخول المسؤول", admin_sub:"خاص بيحيى فقط. سجّل الدخول لعرض الحجوزات.",
       admin_enter:"دخول", admin_panel_title:"الحجوزات المستلمة",
       ped_kids_t:"الأطفال", ped_kids_d:"استيقاظ موسيقي عبر اللعب والاستماع وقطع بسيطة لبناء أساس متين دون ضغط.",
       ped_teen_t:"المراهقون", ped_teen_d:"برنامج محفّز وتقنية منظمة وتحضير للامتحانات أو المسابقات حسب الهدف.",
@@ -968,38 +992,58 @@
     });
   }
 
-  /* ---------------- STORAGE HELPERS ---------------- */
+  /* ---------------- STORAGE HELPERS (Firestore) ---------------- */
   async function getBookings(){
     try{
-      const res = await window.storage.get("bookings", true);
-      return res && res.value ? JSON.parse(res.value) : [];
+      const snap = await getDocs(collection(db, "bookings"));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }catch(e){
+      console.error("Firestore read error (bookings)", e);
       return [];
     }
   }
-  async function saveBookings(list){
+  async function addBookingDoc(data){
     try{
-      await window.storage.set("bookings", JSON.stringify(list), true);
+      const ref = await addDoc(collection(db, "bookings"), data);
+      return ref.id;
+    }catch(e){
+      console.error("Firestore write error (addBooking)", e);
+      return null;
+    }
+  }
+  async function updateBookingDoc(id, data){
+    try{
+      await updateDoc(doc(db, "bookings", id), data);
       return true;
     }catch(e){
-      console.error("Storage error", e);
+      console.error("Firestore write error (updateBooking)", e);
+      return false;
+    }
+  }
+  async function deleteBookingDoc(id){
+    try{
+      await deleteDoc(doc(db, "bookings", id));
+      return true;
+    }catch(e){
+      console.error("Firestore write error (deleteBooking)", e);
       return false;
     }
   }
   async function getOffDays(){
     try{
-      const res = await window.storage.get("offDays", true);
-      return res && res.value ? JSON.parse(res.value) : [];
+      const snap = await getDoc(doc(db, "meta", "offDays"));
+      return snap.exists() ? (snap.data().days || []) : [];
     }catch(e){
+      console.error("Firestore read error (offDays)", e);
       return [];
     }
   }
-  async function saveOffDays(list){
+  async function saveOffDaysDoc(list){
     try{
-      await window.storage.set("offDays", JSON.stringify(list), true);
+      await setDoc(doc(db, "meta", "offDays"), { days: list });
       return true;
     }catch(e){
-      console.error("Storage error", e);
+      console.error("Firestore write error (offDays)", e);
       return false;
     }
   }
@@ -1080,15 +1124,13 @@
     }
 
     const booking = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
       name, phone, date, time,
       levelId: level.id, levelLabel: levelLabel(level), price: level.price,
       createdAt: new Date().toISOString()
     };
 
-    const list = await getBookings();
-    list.push(booking);
-    const ok = await saveBookings(list);
+    const newId = await addBookingDoc(booking);
+    const ok = newId !== null;
 
     if(ok){
       msgEl.className = "form-msg ok";
@@ -1118,16 +1160,36 @@
     if(e.target === adminOverlay) adminOverlay.classList.remove("open");
   });
 
+  onAuthStateChanged(auth, (user)=>{
+    if(user){
+      document.getElementById("adminGate").style.display = "none";
+      document.getElementById("adminPanel").style.display = "block";
+      document.getElementById("adminModalBox").classList.add("wide");
+      refreshAdminCalendar();
+    }else{
+      document.getElementById("adminGate").style.display = "block";
+      document.getElementById("adminPanel").style.display = "none";
+      document.getElementById("adminModalBox").classList.remove("wide");
+    }
+  });
+
+  document.getElementById("adminLogout").addEventListener("click", async ()=>{
+    await signOut(auth);
+    adminOverlay.classList.remove("open");
+  });
+
   document.getElementById("adminPassSubmit").addEventListener("click", async ()=>{
-    const val = document.getElementById("adminPassInput").value;
+    const email = document.getElementById("adminEmailInput").value.trim();
+    const pass = document.getElementById("adminPassInput").value;
     const errEl = document.getElementById("adminErr");
-    if(val === ADMIN_PASSWORD){
-      errEl.textContent = "";
+    errEl.textContent = "";
+    try{
+      await signInWithEmailAndPassword(auth, email, pass);
       document.getElementById("adminGate").style.display = "none";
       document.getElementById("adminPanel").style.display = "block";
       document.getElementById("adminModalBox").classList.add("wide");
       await refreshAdminCalendar();
-    }else{
+    }catch(e){
       errEl.textContent = dict[currentLang].admin_wrong;
     }
   });
@@ -1175,7 +1237,7 @@
     offBtn.onclick = async ()=>{
       const current = await getOffDays();
       const updated = current.includes(ds) ? current.filter(x=>x!==ds) : [...current, ds];
-      await saveOffDays(updated);
+      await saveOffDaysDoc(updated);
       await refreshAdminCalendar();
       await renderAdminDay(ds);
     };
@@ -1201,8 +1263,7 @@
         btn.addEventListener("click", async ()=>{
           if(!confirm(d.admin_confirm_delete)) return;
           const id = btn.getAttribute("data-id");
-          const current = await getBookings();
-          await saveBookings(current.filter(b=>b.id !== id));
+          await deleteBookingDoc(id);
           await refreshAdminCalendar();
           await renderAdminDay(ds);
         });
@@ -1258,21 +1319,18 @@
       const level = LEVELS.find(l=>l.id===levelId) || LEVELS[0];
       if(!name || !phone) return;
 
-      const current = await getBookings();
       if(existing){
-        const idx = current.findIndex(b=>b.id===existing.id);
-        if(idx>-1){
-          current[idx] = { ...current[idx], name, phone, date:ds, time, levelId:level.id, levelLabel:levelLabel(level), price:level.price };
-        }
+        await updateBookingDoc(existing.id, {
+          name, phone, date:ds, time,
+          levelId:level.id, levelLabel:levelLabel(level), price:level.price
+        });
       }else{
-        current.push({
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        await addBookingDoc({
           name, phone, date:ds, time,
           levelId:level.id, levelLabel:levelLabel(level), price:level.price,
           createdAt: new Date().toISOString()
         });
       }
-      await saveBookings(current);
       zone.innerHTML = "";
       await refreshAdminCalendar();
       await renderAdminDay(ds);
