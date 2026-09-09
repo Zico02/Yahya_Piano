@@ -564,6 +564,7 @@
             <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:8px;color:var(--muted);" data-t="admin_slots_title">Créneaux horaires</label>
             <div id="adminSlotsGrid" class="slots-grid"></div>
             <button class="btn btn-outline btn-sm" id="hourOffBtn" data-t="admin_hour_off" style="margin-top:10px;" disabled>Heure indisponible</button>
+            <div class="form-msg" id="adminSlotsMsg"></div>
           </div>
         </div>
       </div>
@@ -623,6 +624,7 @@
       admin_confirm_delete:"Supprimer cette réservation ?",
       admin_slots_title:"Créneaux horaires", admin_slot_booked:"réservé",
       admin_hour_off:"Heure indisponible",
+      admin_slots_saved:"Créneaux mis à jour ✓", admin_slots_error:"Échec de l'enregistrement, réessayez.",
       footer_tag:"Professeur d'État, double diplômé en solfège et en piano", footer_admin:"Accès administrateur",
       admin_title:"Accès administrateur", admin_sub:"Réservé à Yahya. Connectez-vous pour voir les réservations.",
       admin_enter:"Entrer", admin_panel_title:"Réservations reçues",
@@ -663,6 +665,7 @@
       admin_confirm_delete:"Delete this booking?",
       admin_slots_title:"Time slots", admin_slot_booked:"booked",
       admin_hour_off:"Block selected hours",
+      admin_slots_saved:"Slots updated ✓", admin_slots_error:"Save failed, try again.",
       footer_tag:"State-certified teacher, dual-degree holder in music theory and piano", footer_admin:"Admin access",
       admin_title:"Admin access", admin_sub:"For Yahya only. Sign in to view bookings.",
       admin_enter:"Enter", admin_panel_title:"Bookings received",
@@ -703,6 +706,7 @@
       admin_confirm_delete:"¿Eliminar esta reserva?",
       admin_slots_title:"Horarios", admin_slot_booked:"reservado",
       admin_hour_off:"Bloquear horas seleccionadas",
+      admin_slots_saved:"Horarios actualizados ✓", admin_slots_error:"Error al guardar, inténtalo de nuevo.",
       footer_tag:"Profesor certificado por el Estado, doble titulado en solfeo y piano", footer_admin:"Acceso de administrador",
       admin_title:"Acceso de administrador", admin_sub:"Solo para Yahya. Inicia sesión para ver las reservas.",
       admin_enter:"Entrar", admin_panel_title:"Reservas recibidas",
@@ -743,6 +747,7 @@
       admin_confirm_delete:"هل تريد حذف هذا الحجز؟",
       admin_slots_title:"مواعيد الحصص", admin_slot_booked:"محجوز",
       admin_hour_off:"حظر الساعات المحددة",
+      admin_slots_saved:"تم تحديث المواعيد ✓", admin_slots_error:"فشل الحفظ، حاول مرة أخرى.",
       footer_tag:"أستاذ معتمد من الدولة، حاصل على شهادتين في السولفيج والبيانو", footer_admin:"دخول المسؤول",
       admin_title:"دخول المسؤول", admin_sub:"خاص بيحيى فقط. سجّل الدخول لعرض الحجوزات.",
       admin_enter:"دخول", admin_panel_title:"الحجوزات المستلمة",
@@ -1278,6 +1283,8 @@
     const d = dict[currentLang];
     document.getElementById("adminDayLabel").textContent = formatDayLabel(ds);
     document.getElementById("adminFormZone").innerHTML = "";
+    const slotsMsgEl = document.getElementById("adminSlotsMsg");
+    if(slotsMsgEl) slotsMsgEl.textContent = "";
     if(adminHourSelection.__day !== ds){
       adminHourSelection = new Set();
       adminHourSelection.__day = ds;
@@ -1362,9 +1369,12 @@
         btn.textContent = t;
         btn.className = "slot-btn blocked-state";
         btn.addEventListener("click", async ()=>{
+          const msgEl = document.getElementById("adminSlotsMsg");
           const current = await getAllBlockedSlots();
           const forDay = (current[ds] || []).filter(x=>x!==t);
-          await setBlockedSlotsForDate(ds, forDay);
+          const ok = await setBlockedSlotsForDate(ds, forDay);
+          msgEl.className = ok ? "form-msg ok" : "form-msg err";
+          msgEl.textContent = ok ? d.admin_slots_saved : d.admin_slots_error;
           await renderAdminSlots(ds, dayBookings);
           await refreshBookingCalendar();
         });
@@ -1374,6 +1384,7 @@
         btn.addEventListener("click", ()=>{
           if(adminHourSelection.has(t)) adminHourSelection.delete(t);
           else adminHourSelection.add(t);
+          document.getElementById("adminSlotsMsg").textContent = "";
           renderAdminSlots(ds, dayBookings);
         });
       }
@@ -1383,9 +1394,12 @@
     const applyBtn = document.getElementById("hourOffBtn");
     applyBtn.disabled = adminHourSelection.size === 0;
     applyBtn.onclick = async ()=>{
+      const msgEl = document.getElementById("adminSlotsMsg");
       const current = await getAllBlockedSlots();
       const merged = new Set([...(current[ds] || []), ...adminHourSelection]);
-      await setBlockedSlotsForDate(ds, [...merged]);
+      const ok = await setBlockedSlotsForDate(ds, [...merged]);
+      msgEl.className = ok ? "form-msg ok" : "form-msg err";
+      msgEl.textContent = ok ? d.admin_slots_saved : d.admin_slots_error;
       const day = adminHourSelection.__day;
       adminHourSelection = new Set();
       adminHourSelection.__day = day;
